@@ -59,6 +59,8 @@ Cuba.define do
 
       pr_updated = payload['pullrequest_updated']
 
+      puts payload.inspect
+
       # hack | ugly & time-consuming...
       if pr_updated
         repo_name = pr_updated['source']['repository']['full_name']
