@@ -38,6 +38,9 @@ Cuba.define do
   on post do
     on 'codeship' do
       build_attrs = JSON.parse(req.body.read)['build']
+
+      puts build_attrs.inspect
+
       build_id = build_attrs['build_id']
       build_attrs['badge_url'] = "#{req.env['rack.url_scheme']}://#{req.env['HTTP_HOST']}/badge/#{build_id}"
 
@@ -55,11 +58,11 @@ Cuba.define do
       # unfortunately pullrequest_updated doesn't contain the pr_id... :(((
       # https://bitbucket.org/site/master/issue/8340/pull-request-post-hook-does-not-include
       payload = JSON.parse(req.body.read)
+      puts payload.inspect
+
       pr = payload['pullrequest_created']
 
       pr_updated = payload['pullrequest_updated']
-
-      puts payload.inspect
 
       # hack | ugly & time-consuming...
       if pr_updated
