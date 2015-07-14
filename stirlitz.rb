@@ -33,12 +33,17 @@ Cuba.define do
       end
     end
 
+    on 'log' do
+      res.write File.open('log.txt', 'r').read
+    end
+
   end
 
   on post do
     on 'codeship' do
       build_attrs = JSON.parse(req.body.read)['build']
 
+      write_log(build_attrs, 'codeship')
       puts build_attrs.inspect
 
       build_id = build_attrs['build_id']
@@ -59,6 +64,7 @@ Cuba.define do
       # https://bitbucket.org/site/master/issue/8340/pull-request-post-hook-does-not-include
       payload = JSON.parse(req.body.read)
       puts payload.inspect
+      write_log(payload, 'bitbucket')
 
       pr = payload['pullrequest_created']
 
@@ -113,4 +119,12 @@ Cuba.define do
 
   end
 
+end
+
+def write_log(json_data, type)
+  File.open('log.txt', 'a') do |f|
+    f.write "--------------------#{Time.now}-#{type}------------------<br />"
+    f.write json_data.inspect
+    f.write "----------------------------------------<br />"
+  end
 end
