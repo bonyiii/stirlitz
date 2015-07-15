@@ -58,7 +58,6 @@ class CodeshipBuild < Sequel::Model
   def after_save
     super
 
-    require 'pry'; binding.pry
     handle_pull_request_approval!
     send_badge_comment_if_needed!
   end
