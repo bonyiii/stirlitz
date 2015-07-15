@@ -41,7 +41,7 @@ Cuba.define do
 
   on post do
     on 'codeship' do
-      build_attrs = JSON.parse(req.body.read)#['build']
+      build_attrs = JSON.parse(req.body.read)['build']
 
       write_log(build_attrs, 'codeship')
       puts build_attrs.inspect
