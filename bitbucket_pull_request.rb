@@ -30,20 +30,20 @@ class BitbucketPullRequest < Sequel::Model
 
   def validate
     super
-    validates_presence [:title, :self_link, :merge_link, :approve_link,
-                        :decline_link, :state, :pr_id, :source_commit_link,
+    validates_presence [:title, :self_link,
+                        :state, :pr_id, :source_commit_link,
                         :source_commit_hash, :repository_name,
                         :repository_full_name, :repository_link]
     validates_unique [:pr_id, :repository_full_name]
   end
 
   def approve!
-    ar = Curl::Easy.http_post(approve_link){ |c| set_basic_auth(c) }
+    ar = Curl::Easy.http_post(approve_link_url){ |c| set_basic_auth(c) }
     ar.response_code == 200
   end
 
   def unapprove!
-    ur = Curl::Easy.http_delete(approve_link){ |c| set_basic_auth(c) }
+    ur = Curl::Easy.http_delete(approve_link_url){ |c| set_basic_auth(c) }
     ur.response_code == 200
   end
 
@@ -73,6 +73,18 @@ class BitbucketPullRequest < Sequel::Model
 
   private
 
+  def merge_link_url
+    "#{self_link}/merge"
+  end
+
+  def approve_link_url
+    "#{self_link}/approve"
+  end
+
+  def decline_link_url
+    "#{self_link}/decline"
+  end
+
   def commits_link
     "#{self_link}/commits"
   end
@@ -81,6 +93,8 @@ class BitbucketPullRequest < Sequel::Model
     "#{self_v1_link}/comments"
   end
 
+  # http://restbrowser.bitbucket.org/
+  # Bitbucket API V2 not supporting posting comments...
   def self_v1_link
     self_link.sub(/\/api\/2\.0\//, '/api/1.0/')
   end

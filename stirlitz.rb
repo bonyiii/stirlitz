@@ -41,7 +41,7 @@ Cuba.define do
 
   on post do
     on 'codeship' do
-      build_attrs = JSON.parse(req.body.read)['build']
+      build_attrs = JSON.parse(req.body.read)#['build']
 
       write_log(build_attrs, 'codeship')
       puts build_attrs.inspect
@@ -66,17 +66,7 @@ Cuba.define do
       puts payload.inspect
       write_log(payload, 'bitbucket')
 
-      pr = payload['pullrequest_created']
-
-      pr_updated = payload['pullrequest_updated']
-
-      # hack | ugly & time-consuming...
-      if pr_updated
-        repo_name = pr_updated['source']['repository']['full_name']
-        # branch_name = pr_updated['source']['branch']['name']
-
-        BitbucketPullRequest.where(repository_full_name: repo_name).each(&:update_last_commit_sha!)
-      end
+      pr = payload['pullrequest']
 
       if pr.nil?
         res.status = 202
@@ -84,10 +74,7 @@ Cuba.define do
       else
         pr_attrs = {
           description: pr['description'],
-          decline_link: pr['links']['decline']['href'],
-          approve_link: pr['links']['approve']['href'],
           self_link: pr['links']['self']['href'],
-          merge_link: pr['links']['merge']['href'],
           title: pr['title'],
           state: pr['state'],
           pr_id: pr['id'],
@@ -99,10 +86,12 @@ Cuba.define do
         }
 
         begin
-          pr = BitbucketPullRequest.update_or_create({pr_id: pr_attrs[:pr_id],
+          # This returns nil if nothing changed
+          bpr = BitbucketPullRequest.update_or_create({pr_id: pr_attrs[:pr_id],
                                                       repository_full_name: pr_attrs[:repository_full_name]}, pr_attrs)
+          bpr = BitbucketPullRequest.find(pr_id: pr_attrs[:pr_id])
 
-          if pr.valid?
+          if bpr.valid?
             res.status = 200
           else
             res.status = 500
