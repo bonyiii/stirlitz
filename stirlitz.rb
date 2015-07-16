@@ -14,25 +14,6 @@ Cuba.define do
       res.redirect '/ohai'
     end
 
-    # codeship generates the badges nicely, but the url is based on the project_uuid,
-    # and that's currently isn't exposed by their API
-    # things would be much easier if the codeship webhook contained the badge url too...
-    on 'badge/:build_id' do |build_id|
-      res['Date'] = DateTime.now.to_time.utc.rfc2822.sub( /.....$/, 'GMT')
-      res['Expires'] = 'Fri, 01 Jan 1990 00:00:00 GMT'
-      res['Pragma'] = 'no-cache'
-      res['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-      res.headers['Content-Type']  = 'image/png'
-
-      build = CodeshipBuild[build_id: build_id]
-
-      if build.nil?
-        res.status = 404
-      else
-        res.write File.open(File.join('misc', 'badges', "status_#{build.badge_status}.png")).read
-      end
-    end
-
     on 'log' do
       res.write File.open('log.txt', 'r').read
     end
@@ -41,13 +22,11 @@ Cuba.define do
 
   on post do
     on 'codeship' do
-      build_attrs = JSON.parse(req.body.read)['build']
+      payload = JSON.parse(req.body.read)
+      write_log(payload, 'codeship')
 
-      write_log(build_attrs, 'codeship')
-      puts build_attrs.inspect
-
+      build_attrs = payload['build']
       build_id = build_attrs['build_id']
-      build_attrs['badge_url'] = "#{req.env['rack.url_scheme']}://#{req.env['HTTP_HOST']}/badge/#{build_id}"
 
       begin
         CodeshipBuild.update_or_create({build_id: build_id}, build_attrs)
@@ -63,7 +42,6 @@ Cuba.define do
       # unfortunately pullrequest_updated doesn't contain the pr_id... :(((
       # https://bitbucket.org/site/master/issue/8340/pull-request-post-hook-does-not-include
       payload = JSON.parse(req.body.read)
-      puts payload.inspect
       write_log(payload, 'bitbucket')
 
       pr = payload['pullrequest']

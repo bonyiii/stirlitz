@@ -4,7 +4,6 @@
 #
 #  id                 :integer
 #  build_url          :string
-#  badge_url          :string
 #  commit_url         :string
 #  project_id         :integer
 #  build_id           :integer
@@ -18,6 +17,8 @@
 #  badge_comment_sent :boolean
 #  created_at         :datetime
 #  updated_at         :datetime
+#  updated_at         :datetime
+#  project_uuid       :string
 #
 
 require './bitbucket_pull_request'
@@ -37,7 +38,7 @@ class CodeshipBuild < Sequel::Model
 
   def validate
     super
-    validates_presence [:build_url, :badge_url, :commit_url, :project_id,
+    validates_presence [:build_url,  :commit_url, :project_id,
                         :build_id, :status, :project_full_name, :commit_id,
                         :short_commit_id, :message, :committer, :branch]
     validates_unique :build_id
@@ -68,6 +69,12 @@ class CodeshipBuild < Sequel::Model
     update_pull_request!
   end
 
+  def before_create
+    super
+
+    set_project_uuid
+  end
+
   private
 
   def send_badge_comment_if_needed!
@@ -93,6 +100,21 @@ class CodeshipBuild < Sequel::Model
     return if bitbucket_pull_request.nil?
 
     bitbucket_pull_request.update_last_commit_sha!
+  end
+
+  def set_project_uuid
+    cc = Curl::Easy.http_get(project_url)
+    return unless cc.response_code == 200
+
+    self.project_uuid = JSON.parse(cc.body)['uuid']
+  end
+
+  def project_url
+    "https://codeship.com/api/v1/projects/#{project_id}.json?api_key=#{ENV['CODESHIP_API_KEY']}"
+  end
+
+  def badge_url
+    "https://codeship.com/projects/#{project_uuid}/status?branch=#{branch}"
   end
 
 end
