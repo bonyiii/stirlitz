@@ -32,7 +32,7 @@ class CodeshipBuild < Sequel::Model
 
   def bitbucket_pull_request
     BitbucketPullRequest.first repository_full_name: project_full_name,
-                               last_commit_sha: commit_id[0..11]
+                               last_commit_sha: commit_id
   end
 
   def validate

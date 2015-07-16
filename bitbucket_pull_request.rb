@@ -96,7 +96,7 @@ class BitbucketPullRequest < Sequel::Model
   # http://restbrowser.bitbucket.org/
   # Bitbucket API V2 not supporting posting comments...
   def self_v1_link
-    self_link.sub(/\/api\/2\.0\//, '/api/1.0/')
+    self_link.sub(/\.org\/2\.0\//, '.org/1.0/')
   end
 
   def set_basic_auth(c)
