@@ -17,7 +17,6 @@ Cuba.define do
     on 'log' do
       res.write File.open('log.txt', 'r').read
     end
-
   end
 
   on post do
